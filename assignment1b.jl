@@ -1,6 +1,7 @@
 # Assingment 1b 
 
 using Gurobi
+using JuMP
 using Printf
 using Pkg
 Pkg.add("Distributions")
@@ -16,11 +17,11 @@ function Make_EV_here_and_now(prices_day_one)
     return here_and_now_decision
 end
 
-# Read the data and constants 
-data = load_the_data()
-println(data)
+# Read the data and constants from other file 
+number_of_warehouses, W, cost_miss, cost_tr, warehouse_capacities, transport_capacities, initial_stock, number_of_simulation_periods, sim_T, demand_trajectory = load_the_data()
+println(number_of_warehouses)
 
-# Make model with Gurobi
+# # Make model with Gurobi
 model = Model(Gurobi.Optimizer)
 
 # Define our variables, all positive
@@ -31,7 +32,7 @@ model = Model(Gurobi.Optimizer)
 @variable(model, 0 <= m_wt) # The amount of coffee missing from the daily demand for warehouse w 
 
 # Define our objective function 
-objective_function = 0 #sum() + sum()
+objective_function = 0
 @objective(model, Min, objective_function)
 
 # Define our constraints 
