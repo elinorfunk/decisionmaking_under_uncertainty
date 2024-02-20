@@ -16,6 +16,10 @@ function Make_EV_here_and_now(prices_day_one)
     return here_and_now_decision
 end
 
+# Read the data and constants 
+data = load_the_data()
+println(data)
+
 # Make model with Gurobi
 model = Model(Gurobi.Optimizer)
 
@@ -27,8 +31,8 @@ model = Model(Gurobi.Optimizer)
 @variable(model, 0 <= m_wt) # The amount of coffee missing from the daily demand for warehouse w 
 
 # Define our objective function 
-# @objective(model, Min)
-
+objective_function = 0 #sum() + sum()
+@objective(model, Min, objective_function)
 
 # Define our constraints 
 
