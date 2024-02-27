@@ -43,7 +43,12 @@ OB = sum(sum(prices[w] * x[w, t] for w in W, t in sim_T)
 @objective(model, Min, OB)
 
 # # Define our constraints 
-# @constraint(model, 0 <= z[w = W, t = sim_T] <= transport_capacities[w] for w in W) # 1. constraint about storage
+
+ # Constraints for storage capacities 
+@constraint(model, transport1[1, t in sim_T], z[1, t] <= warehouse_capacities[1])
+@constraint(model, transport2[2, t in sim_T], z[2, t] <= warehouse_capacities[2]) # 1. constraint about storage from warehouse 2
+@constraint(model, transport3[3, t in sim_T], z[3, t] <= warehouse_capacities[3]) # 1. constraint about storage from warehouse 3
+
 # @constraint(model, sum(y_wqt_send[w, q, t] for q in Q if q != w) <= sum(transport_capacities[w, q] for q in Q if q != w, q in Q)) #2. constraint 
 # @constraint(model, sum(y_wqt_send[w, q, t] for q in Q if q != w) <= z_wt[w, t-1] for w in W, t in sim_T) # 3. constraint 
 # @constraint(model, z_wt[w,t] + y_wqt_recieved[w, q, t] >= demand_trajectory[w, t] for w in W, q in W, t in sim_T)
