@@ -5,6 +5,9 @@ using Gurobi
 using JuMP
 using Printf
 using Pkg
+using DataFrames
+using CSV
+
 Pkg.add("Distributions")
 
 # import data from 
@@ -14,45 +17,111 @@ include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking
 
 # The Expected-Value benchmark 
 function Make_EV_here_and_now(prices_day_one)
-    here_and_now_decision = 0 
-    return here_and_now_decision
+    # Read the data and constants from other file 
+    number_of_warehouses, W, cost_miss_b, cost_tr_e, warehouse_capacities, transport_capacities, initial_stock_z, number_of_simulation_periods, sim_T, demand_trajectory = load_the_data()
+
+    # Set random inital prices and get prices for next (?) day 
+    prices_samples = [[sample_next(inintal_price1), sample_next(inintal_price2), sample_next(inintal_price3)] for _ in number_of_simulation_periods]
+    expected_price = mean(prices_samples)
+
+    # # Make model with Gurobi
+    model = Model(Gurobi.Optimizer)
+
+    # Define our variables, all positive
+    @variable(model, x[w = W, t = sim_T] >= 0) # The amount of coffee bought for external suppliers for warehouse w at time t 
+    @variable(model, z[w = W, t = sim_T] >= 0) # The amount of coffee stored at warehouse w at time t 
+    @variable(model, y_send[w = W, q = W, t = sim_T] >= 0) # The amount of coffee sent by warehouse w to warehouse q at time t
+    @variable(model, y_rec[w = W, q = W, t = sim_T] >= 0) # The amount of coffee recieved by warehouse w to warehouse q at time t
+    @variable(model, m[w = W, t = sim_T] >= 0) # The amount of coffee missing from the daily demand for warehouse w 
+
+    # Define our objective function 
+    OB = sum(sum(expected_price[w] * x[w, t] for w in W, t in sim_T) + sum((cost_tr_e[w, t] * y_rec[w, q, t]) + (cost_miss_b[w] * m[w, t]) for w in W, q in W, t in sim_T) for t in sim_T)
+    @objective(model, Min, OB)
+
+    # # Define our constraints 
+
+    # 1. Constraints for storage limits
+    for w in W 
+        for t in sim_T 
+            @constraint(model, z[w, t] <= warehouse_capacities[w])
+        end
+    end 
+
+    # 2. Constraint for tranportation limits 
+    for t in sim_T
+        @constraint(model, sum(y_send[w, q, t] for w in W for q in W if q != w) <= sum(transport_capacities[w, q] for w in W for q in W if q != w)) 
+    end 
+
+    
+    # 3. Constraint, we need to use implement the inital storage initial_stock_z
+    # for t in sim_T 
+    #     for w in W 
+    #         if t == 1
+    #             @constraint(model, sum(y_send[w, q, t] for q in W if q != w) <= initial_stock_z) 
+    #         else 
+    #             @constraint(model, sum(y_send[w, q, t] for q in W if q != w) <= z[w, t-1]) 
+    #         end
+    #     end 
+    # end 
+
+    # 4. Ensure that the coffee demand is always met 
+    for w in W
+        for t in sim_T 
+            @constraint(model, z[w,t] + sum(y_rec[w,q,t] for q in W if q != w) >= demand_trajectory[w,t])
+        end 
+    end 
+
+    # 5. Balance constraint, same here, we need to implement the inital_stock_z 
+    # for w in W 
+    #     for t in sim_T
+    #         if t == 1
+    #             @constraint(model, x[w,t] + m[w,t] + initial_stock_z
+    #             + sum(y_rec[w,q,t] for q in W if q != w) 
+    #             - sum(y_send[w,q,t] for q in W if q != w) 
+    #             - demand_trajectory[w,t] == z[w,t])
+    #         else 
+    #             @constraint(model, x[w,t] + m[w,t] + z[w, t-1]
+    #             + sum(y_rec[w,q,t] for q in W if q != w) 
+    #             - sum(y_send[w,q,t] for q in W if q != w) 
+    #             - demand_trajectory[w,t] == z[w,t])
+    #         end 
+    #     end
+    # end 
+
+    # 6. All variables greater or equal to zero 
+    for w in W 
+        for q in W 
+            for t in sim_T 
+                @constraint(model, y_send[w,q,t] >= 0)
+                @constraint(model, y_rec[w,q,t] >= 0)
+            end 
+        end
+        for t in sim_T
+            @constraint(model, x[w,t] >= 0)
+            @constraint(model, z[w,t] >= 0)
+            @constraint(model, m[w,t] >= 0)
+        end 
+    end 
+
+    # Solve 
+    optimize!(model)
+
+    if termination_status(model) == MOI.OPTIMAL
+        println("All went good")
+        obj_val = objective_value(model)
+        values = [value(variable) for variable in all_variables(model)]
+
+        # Save results to dataframe, if necessary 
+        # result_df = DataFrame(Variable = string.(names(model)), Value = values)
+        # CSV.write("Result_assignemnt1b.csv", result_df)
+    end
+
+        return values
 end
 
-# Read the data and constants from other file 
-number_of_warehouses, W, cost_miss_b, cost_tr_e, warehouse_capacities, transport_capacities, initial_stock_z, number_of_simulation_periods, sim_T, demand_trajectory = load_the_data()
-
-# Set random inital prices
-inintal_price1 = 1 
-inintal_price2 = 1 
-inintal_price3 = 1 
-prices = [sample_next(inintal_price1), sample_next(inintal_price2), sample_next(inintal_price3)]
-
-# # Make model with Gurobi
-model = Model(Gurobi.Optimizer)
-
-# Define our variables, all positive
-@variable(model, x[w = W, t = sim_T] >= 0) # The amount of coffee bought for external suppliers for warehouse w at time t 
-@variable(model, z[w = W, t = sim_T] >= 0) # The amount of coffee stored at warehouse w at time t 
-@variable(model, y_sent[w = W, q = W, t = sim_T] >= 0) # The amount of coffee sent by warehouse w to warehouse q at time t
-@variable(model, y_rec[w = W, q = W, t = sim_T] >= 0) # The amount of coffee recieved by warehouse w to warehouse q at time t
-@variable(model, m[w = W, t = sim_T] >= 0) # The amount of coffee missing from the daily demand for warehouse w 
-
-# Define our objective function 
-OB = sum(sum(prices[w] * x[w, t] for w in W, t in sim_T) 
-+ sum((cost_tr_e[w, t] * y_rec[w, q, t]) + (cost_miss_b[w] * m[w, t]) for w in W, q in W, t in sim_T) for t in sim_T)
-@objective(model, Min, OB)
-
-# # Define our constraints 
-
- # Constraints for storage capacities 
-@constraint(model, transport1[1, t in sim_T], z[1, t] <= warehouse_capacities[1])
-@constraint(model, transport2[2, t in sim_T], z[2, t] <= warehouse_capacities[2]) # 1. constraint about storage from warehouse 2
-@constraint(model, transport3[3, t in sim_T], z[3, t] <= warehouse_capacities[3]) # 1. constraint about storage from warehouse 3
-
-# @constraint(model, sum(y_wqt_send[w, q, t] for q in Q if q != w) <= sum(transport_capacities[w, q] for q in Q if q != w, q in Q)) #2. constraint 
-# @constraint(model, sum(y_wqt_send[w, q, t] for q in Q if q != w) <= z_wt[w, t-1] for w in W, t in sim_T) # 3. constraint 
-# @constraint(model, z_wt[w,t] + y_wqt_recieved[w, q, t] >= demand_trajectory[w, t] for w in W, q in W, t in sim_T)
-# @constraint(model, (x_wt[w,t] + m_wt[w,t] + z_wt[w,t-1] + sum(y_wqt_recieved[w, q, t] for q in Q if q != w) - sum(y_wqt_send[w, q, t] for q in Q if q != w) - demand_trajectory for w in W, t in sim_T, q in Q) = z_wt[w,t])
-
-# Solve 
- optimize!(model)
+# Set inital prices 
+inintal_price1 = 1
+inintal_price2 = 1
+inintal_price3 = 1
+initial_prices = [inintal_price1, inintal_price2, inintal_price3]
+here_and_now_dec = Make_EV_here_and_now(initial_prices)
