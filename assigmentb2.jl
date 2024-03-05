@@ -11,8 +11,8 @@ using Distributions  # Adding Distributions package
 Pkg.add("Distributions")
 
 # import data from 
-include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/V2_02435_two_stage_problem_data.jl")
-include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/V2_price_process.jl")
+include("/Users/marloanzarut/Downloads/decisionmaking_under_uncertainty/V2_02435_two_stage_problem_data.jl")
+include("/Users/marloanzarut/Downloads/decisionmaking_under_uncertainty/V2_price_process.jl")
 
 
 # The Expected-Value benchmark 
@@ -92,31 +92,22 @@ function Make_EV_here_and_now(prices_day_one)
         end
     end 
 
-<<<<<<< HEAD
-    # 6. All variables greater or equal to zero 
-    for t in sim_T 
-=======
     #6. What has been sent is equal to what has been received throughout the all networks
 
     for t in sim_T
         for w in W
-           @constraint(model, sum(y_rec[w,q,t] for q in W if q != w) == sum(y_send[w,q,t] for q in W if q != w))
+            @constraint(model, sum(y_rec[w,q,t] for q in W if q != w) == sum(y_send[w,q,t] for q in W if q != w))
         end
     end 
 
 
     # 7. All variables greater or equal to zero 
     for t in sim_T
->>>>>>> 4e8e6e905bdfab281e92bfd4c8eac9eefc9dd8ce
         for w in W 
             for q in W 
                 @constraint(model, y_send[w,q,t] >= 0)
                 @constraint(model, y_rec[w,q,t] >= 0)
-<<<<<<< HEAD
-            end 
-=======
             end
->>>>>>> 4e8e6e905bdfab281e92bfd4c8eac9eefc9dd8ce
             @constraint(model, x[w,t] >= 0)
             @constraint(model, z[w,t] >= 0)
             @constraint(model, m[w,t] >= 0)
