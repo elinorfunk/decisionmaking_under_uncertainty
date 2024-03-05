@@ -97,10 +97,6 @@ function Make_EV_here_and_now(prices_day_one)
         end
     end 
 
-<<<<<<< HEAD
-    # 6. All variables greater or equal to zero 
-    for t in sim_T 
-=======
     #6. What has been sent is equal to what has been received throughout the all networks
 
     for t in sim_T
@@ -112,16 +108,11 @@ function Make_EV_here_and_now(prices_day_one)
 
     # 7. All variables greater or equal to zero 
     for t in sim_T
->>>>>>> 9c5a5cf2beeb88f099c97d47de4a88498801953f
         for w in W 
             for q in W 
                 @constraint(model, y_send[w,q,t] >= 0)
                 @constraint(model, y_rec[w,q,t] >= 0)
-<<<<<<< HEAD
             end 
-=======
-            end
->>>>>>> 9c5a5cf2beeb88f099c97d47de4a88498801953f
             @constraint(model, x[w,t] >= 0)
             @constraint(model, z[w,t] >= 0)
             @constraint(model, m[w,t] >= 0)

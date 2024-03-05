@@ -27,5 +27,5 @@ include("/Users/marloanzarut/Downloads/decisionmaking_under_uncertainty/V2_02435
 include("/Users/marloanzarut/Downloads/decisionmaking_under_uncertainty/V2_price_process.jl")
 
 
-function make_schocastic_here_and_now_decision(prices_day_one, decision)
+#function make_schocastic_here_and_now_decision(prices_day_one, decision)
     
