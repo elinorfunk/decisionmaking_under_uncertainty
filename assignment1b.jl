@@ -21,7 +21,7 @@ function Make_EV_here_and_now(prices_day_one)
     number_of_warehouses, W, cost_miss_b, cost_tr_e, warehouse_capacities, transport_capacities, initial_stock_z, number_of_simulation_periods, sim_T, demand_trajectory = load_the_data()
 
     # Set random inital prices and get prices for next (?) day 
-    prices_samples = [[sample_next(inintal_price1), sample_next(inintal_price2), sample_next(inintal_price3)] for _ in number_of_simulation_periods]
+    prices_samples = [[sample_next(prices_day_one[1]), sample_next(prices_day_one[1]), sample_next(prices_day_one[2])] for _ in number_of_simulation_periods]
     expected_price = mean(prices_samples)
 
     # # Make model with Gurobi
@@ -120,8 +120,8 @@ function Make_EV_here_and_now(prices_day_one)
 end
 
 # Set inital prices 
-inintal_price1 = 1
-inintal_price2 = 1
-inintal_price3 = 1
+inintal_price1 = 10
+inintal_price2 = 10
+inintal_price3 = 10
 initial_prices = [inintal_price1, inintal_price2, inintal_price3]
 here_and_now_dec = Make_EV_here_and_now(initial_prices)
