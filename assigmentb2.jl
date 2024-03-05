@@ -7,6 +7,7 @@ using Pkg
 using DataFrames
 using CSV
 using Distributions  # Adding Distributions package
+using XLSX
 
 Pkg.add("Distributions")
 
@@ -92,35 +93,25 @@ function Make_EV_here_and_now(prices_day_one)
         end
     end 
 
-<<<<<<< HEAD
     # 6. All variables greater or equal to zero 
     for t in sim_T 
-=======
-    #6. What has been sent is equal to what has been received throughout the all networks
-
-    for t in sim_T
-        for w in W
-           @constraint(model, sum(y_rec[w,q,t] for q in W if q != w) == sum(y_send[w,q,t] for q in W if q != w))
-        end
-    end 
-
-
-    # 7. All variables greater or equal to zero 
-    for t in sim_T
->>>>>>> 4e8e6e905bdfab281e92bfd4c8eac9eefc9dd8ce
         for w in W 
             for q in W 
                 @constraint(model, y_send[w,q,t] >= 0)
                 @constraint(model, y_rec[w,q,t] >= 0)
-<<<<<<< HEAD
             end 
-=======
-            end
->>>>>>> 4e8e6e905bdfab281e92bfd4c8eac9eefc9dd8ce
             @constraint(model, x[w,t] >= 0)
             @constraint(model, z[w,t] >= 0)
             @constraint(model, m[w,t] >= 0)
         end 
+    end 
+
+    #7. What has been sent is equal to what has been received throughout the all networks
+
+    for t in sim_T
+        for w in W
+            @constraint(model, sum(y_rec[w,q,t] for q in W if q != w) == sum(y_send[w,q,t] for q in W if q != w))
+        end
     end 
 
     # Solve 
@@ -141,7 +132,7 @@ function Make_EV_here_and_now(prices_day_one)
         # result_df = DataFrame(Variable = string.(names(model)), Value = values)
         # CSV.write("Result_assignemnt1b.csv", result_df)
     end
-    return values, expected_price 
+    return [values], expected_price 
 end
 
 # Set initial prices 
