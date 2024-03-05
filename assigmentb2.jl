@@ -43,8 +43,8 @@ function Make_EV_here_and_now(prices_day_one)
     # # Define our constraints 
 
     # 1. Constraints for storage limits
-    for w in W 
-        for t in sim_T
+    for t in sim_T 
+        for w in W
             @constraint(model, z[w, t] <= warehouse_capacities[w])
         end
     end 
@@ -69,15 +69,15 @@ function Make_EV_here_and_now(prices_day_one)
     
 
     # 4. Ensure that the coffee demand is always met 
-    for w in W
-        for t in sim_T
+    for t in sim_T
+        for w in W
             @constraint(model, z[w,t] + sum(y_rec[w,q,t] for q in W if q != w) >= demand_trajectory[w,t])
         end 
     end 
 
     # 5. Balance constraint
-    for w in W 
-        for t in sim_T
+    for t in sim_T 
+        for w in W
             if t == 1
                 @constraint(model, (x[w,t] + m[w,t] + initial_stock_z[w]
                 + sum(y_rec[w,q,t] for q in W if q != w) 
@@ -128,8 +128,8 @@ function Make_EV_here_and_now(prices_day_one)
 end
 
 # Set initial prices 
-inintal_price1 = 1
-inintal_price2 = 10
-inintal_price3 = 8
+inintal_price1 = 10
+inintal_price2 = 5
+inintal_price3 = 7
 initial_prices = [inintal_price1, inintal_price2, inintal_price3]
 here_and_now_dec = Make_EV_here_and_now(initial_prices)
