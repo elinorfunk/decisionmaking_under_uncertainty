@@ -11,8 +11,8 @@ using Distributions  # Adding Distributions package
 Pkg.add("Distributions")
 
 # import data from 
-include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_02435_two_stage_problem_data.jl")
-include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty/V2_price_process.jl")
+include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/V2_02435_two_stage_problem_data.jl")
+include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/V2_price_process.jl")
 
 
 # The Expected-Value benchmark 
@@ -23,7 +23,7 @@ function Make_EV_here_and_now(prices_day_one)
     number_of_warehouses, W, cost_miss_b, cost_tr_e, warehouse_capacities, transport_capacities, initial_stock_z, number_of_simulation_periods, sim_T, demand_trajectory = load_the_data()
 
     # Set random inital prices and get prices for next (?) day 
-    prices_samples = [[sample_next(inintal_price1), sample_next(inintal_price2), sample_next(inintal_price3)] for _ in 1:number_of_simulation_periods]  # Access sim_T globally
+    prices_samples = [[sample_next(prices_day_one[1]), sample_next(prices_day_one[1]), sample_next(prices_day_one[2])] for _ in number_of_simulation_periods]
     expected_price = mean(prices_samples)
 
     # # Make model with Gurobi
@@ -93,14 +93,12 @@ function Make_EV_here_and_now(prices_day_one)
     end 
 
     # 6. All variables greater or equal to zero 
-    for w in W 
-        for q in W 
-            for t in sim_T 
+    for t in sim_T 
+        for w in W 
+            for q in W 
                 @constraint(model, y_send[w,q,t] >= 0)
                 @constraint(model, y_rec[w,q,t] >= 0)
             end 
-        end
-        for t in sim_T
             @constraint(model, x[w,t] >= 0)
             @constraint(model, z[w,t] >= 0)
             @constraint(model, m[w,t] >= 0)
@@ -125,6 +123,7 @@ function Make_EV_here_and_now(prices_day_one)
         # result_df = DataFrame(Variable = string.(names(model)), Value = values)
         # CSV.write("Result_assignemnt1b.csv", result_df)
     end
+    return values, expected_price 
 end
 
 # Set initial prices 
