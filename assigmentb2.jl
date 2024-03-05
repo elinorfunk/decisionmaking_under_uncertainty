@@ -92,15 +92,22 @@ function Make_EV_here_and_now(prices_day_one)
         end
     end 
 
-    # 6. All variables greater or equal to zero 
-    for w in W 
-        for q in W 
-            for t in sim_T 
+    #6. What has been sent is equal to what has been received throughout the all networks
+
+    for t in sim_T
+        for w in W
+           @constraint(model, sum(y_rec[w,q,t] for q in W if q != w) == sum(y_send[w,q,t] for q in W if q != w))
+        end
+    end 
+
+
+    # 7. All variables greater or equal to zero 
+    for t in sim_T
+        for w in W 
+            for q in W 
                 @constraint(model, y_send[w,q,t] >= 0)
                 @constraint(model, y_rec[w,q,t] >= 0)
-            end 
-        end
-        for t in sim_T
+            end
             @constraint(model, x[w,t] >= 0)
             @constraint(model, z[w,t] >= 0)
             @constraint(model, m[w,t] >= 0)
@@ -128,8 +135,8 @@ function Make_EV_here_and_now(prices_day_one)
 end
 
 # Set initial prices 
-inintal_price1 = 10
+inintal_price1 = 2
 inintal_price2 = 5
-inintal_price3 = 7
+inintal_price3 = 10
 initial_prices = [inintal_price1, inintal_price2, inintal_price3]
 here_and_now_dec = Make_EV_here_and_now(initial_prices)
