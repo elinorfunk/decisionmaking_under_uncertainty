@@ -16,8 +16,8 @@ Pkg.add("Distributions")
 # include("/Users/marloanzarut/Downloads/decisionmaking_under_uncertainty/V2_price_process.jl")
 
 # Elinoprs files 
-include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/V2_02435_two_stage_problem_data.jl")
-include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/V2_price_process.jl")
+include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_02435_two_stage_problem_data.jl")
+include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_price_process.jl")
 
 
 # The Expected-Value benchmark 
