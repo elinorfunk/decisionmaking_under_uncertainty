@@ -11,7 +11,7 @@ using DataFrames
 using XLSX
 
 #include data from assignment 1b 
-include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/assigmentb2.jl")
+include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/deliverable_1b.jl")
 
 
 function optimization(prices)
