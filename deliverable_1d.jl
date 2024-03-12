@@ -34,16 +34,20 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
     number_of_warehouses, W, cost_miss_b, cost_tr_e, warehouse_capacities, transport_capacities, initial_stock_z, number_of_simulation_periods, sim_T, demand_trajectory = load_the_data()
 
     # generate 1000 equally probable scenarios using sample next (given the initial prices)
-    scenarios = [[sample_next(prices_day_one[1]), sample_next(prices_day_one[1]), sample_next(prices_day_one[2])] for _ in number_of_simulation_periods] ### 1000 SIMULATION PERIODS?
+    scenarios = [[sample_next(prices_day_one[1]), sample_next(prices_day_one[1]), sample_next(prices_day_one[2])] for _ in 1:1000] ### 1000 SIMULATION PERIODS?
     
     #reduce them to N representative ones with appropriate probabilities
     ## N representative
 
-    N_representative_scenarios = randperm(length(scenarios))[1:N]
+    N_representative_scenarios_indices = randperm(length(scenarios))[1:N]
+
+    N_representative_scenarios = length(N_representative_scenarios_indices)
+
+    S = 1: N_representative_scenarios
 
     ## Probabilities
     #probabilities = fill(1/N, N) ### WORK IT OUT
-    probabilities = fill(1/N, N) 
+    probabilities = fill(1/length(N_representative_scenarios_indices), N) 
 
 
     expected_price = mean(scenarios)
@@ -52,43 +56,51 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
     model = Model(Gurobi.Optimizer)
 
     # Define our variables, all positive
-    @variable(model, x[w = W, t = sim_T, s in N_representative_scenarios] >= 0) # N_representative_scenarios because we want to get scenarios according to N chosen scenarios?
-    @variable(model, z[w = W, t = sim_T, s in N_representative_scenarios] >= 0)  
-    @variable(model, y_send[w = W, q = W, t = sim_T, s in N_representative_scenarios] >= 0) 
-    @variable(model, y_rec[w = W, q = W, t = sim_T, s in N_representative_scenarios] >= 0) 
-    @variable(model, m[w = W, t = sim_T, s in N_representative_scenarios] >= 0) 
+    @variable(model, x[w = W, t = sim_T, s = S] >= 0) # N_representative_scenarios because we want to get scenarios according to N chosen scenarios?
+    @variable(model, z[w = W, t = sim_T, s = S] >= 0)  
+    @variable(model, y_send[w = W, q = W, t = sim_T, s = S] >= 0) 
+    @variable(model, y_rec[w = W, q = W, t = sim_T, s = S] >= 0) 
+    @variable(model, m[w = W, t = sim_T, s = S] >= 0) 
 
     
     # Define our objective function 
     OB = sum(probabilities[s] * (
-        sum(expected_price[w] * x[w, t] for w in W, t in sim_T)
-        + sum((cost_tr_e[w, t] * y_rec[w, q, t]) + (cost_miss_b[w] * m[w, t]) for w in W, q in W, t in sim_T)
-    ) for s in N_representative_scenarios)
+        sum(expected_price[w] * x[w, t, s] for w in W, t in sim_T)
+        + sum((cost_tr_e[w, t] * y_rec[w, q, t, s]) + (cost_miss_b[w] * m[w, t, s]) for w in W, q in W, t in sim_T)
+    ) for s in S)
 
     ### EXPECTED PRICE?
     @objective(model, Min, OB)
 
     # # Define our constraints 
 
-    # 1. Constraints for storage limits
-    
-    @constraint(model, z[w in W, t in sim_T, s in N_representative_scenarios] <= warehouse_capacities[w])
-    
+    # # 1. Constraints for storage limits
+    for t in sim_T 
+        for w in W
+            for s in S
+            @constraint(model, z[w, t, s] <= warehouse_capacities[w])
+            end
+        end
+    end     
 
     # 2. Constraint for transportation limits 
     for t in  sim_T
         for w in W
-            @constraint(model, sum(y_send[w, q, t] for q in W if q != w) <= sum(transport_capacities[w, q] for q in W if q != w)) 
+            for s in S
+            @constraint(model, sum(y_send[w, q, t, s] for q in W if q != w) <= sum(transport_capacities[w, q] for q in W if q != w)) 
+            end
         end
     end 
 
     # 3. Constraint for initial storage
     for t in sim_T
         for w in W
-            if t == 1
-                @constraint(model, sum(y_send[w, q, t] for q in W if q != w) <= initial_stock_z[w])  # Constraint for the first time period
-            else
-                @constraint(model, sum(y_send[w, q, t] for q in W if q != w) <= z[w, t - 1])  # Constraint for subsequent time periods
+            for s in S
+                 if t == 1
+                     @constraint(model, sum(y_send[w, q, t, s] for q in W if q != w) <= initial_stock_z[w])  # Constraint for the first time period
+                 else
+                     @constraint(model, sum(y_send[w, q, t, s] for q in W if q != w) <= z[w, t - 1, s])  # Constraint for subsequent time periods
+                end
             end
         end
     end
@@ -97,23 +109,28 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
     # 4. Ensure that the coffee demand is always met 
     for t in sim_T
         for w in W
-            @constraint(model, z[w,t] + sum(y_rec[w,q,t] for q in W if q != w) >= demand_trajectory[w,t])
+            for s in S
+            @constraint(model, z[w,t,s] + sum(y_rec[w,q,t, s] for q in W if q != w) >= demand_trajectory[w,t])
+            end
         end 
     end 
 
     # 5. Balance constraint
     for t in sim_T 
         for w in W
-            if t == 1
-                @constraint(model, (x[w,t] + m[w,t] + initial_stock_z[w]
-                + sum(y_rec[w,q,t] for q in W if q != w) 
-                - sum(y_send[w,q,t] for q in W if q != w) 
-                - demand_trajectory[w,t]) == z[w,t])
-            else 
-                @constraint(model, (x[w,t] + m[w,t] + z[w, t-1]
-                + sum(y_rec[w,q,t] for q in W if q != w) 
-                - sum(y_send[w,q,t] for q in W if q != w) 
-                - demand_trajectory[w,t]) == z[w,t])
+            for s in S
+                if t == 1
+                    @constraint(model, (x[w,t,s] + m[w,t,s] + initial_stock_z[w]
+                    + sum(y_rec[w,q,t, s] for q in W if q != w) 
+                    - sum(y_send[w,q,t, s ] for q in W if q != w) 
+                    - demand_trajectory[w,t]) == z[w,t,s])
+                else 
+                    @constraint(model, (x[w,t,s] + m[w,t,s] + z[w, t-1,s]
+                    + sum(y_rec[w,q,t, s] for q in W if q != w) 
+                    - sum(y_send[w,q,t, s] for q in W if q != w) 
+                    - demand_trajectory[w,t]) == z[w,t,s])
+                end
+            
             end 
         end
     end 
@@ -122,31 +139,38 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
 
     for t in sim_T
         for w in W
-            @constraint(model, sum(y_rec[w,q,t] for q in W if q != w) == sum(y_send[w,q,t] for q in W if q != w))
+            for s in S
+                @constraint(model, sum(y_rec[w,q,t, s] for q in W if q != w) == sum(y_send[w,q,t, s] for q in W if q != w))
+            end
         end
+
     end 
+    #7. What has been sent is equal to what has been received throughout the all networks
 
+        for t in sim_T
+            for w in W
+                for s in S
+                    @constraint(model, sum(y_rec[w,q,t,s] for q in W if q != w) == sum(y_send[w,q,t,s] for q in W if q != w))
+                end
+            end
+        end 
 
-    # 7. All variables greater or equal to zero 
+    # 8. All variables greater or equal to zero 
     for t in sim_T
         for w in W 
-            for q in W 
-                @constraint(model, y_send[w,q,t] >= 0)
-                @constraint(model, y_rec[w,q,t] >= 0)
-            end 
-            @constraint(model, x[w,t] >= 0)
-            @constraint(model, z[w,t] >= 0)
-            @constraint(model, m[w,t] >= 0)
+            for s in S
+                for q in W 
+                        @constraint(model, y_send[w,q,t,s] >= 0)
+                        @constraint(model, y_rec[w,q,t,s] >= 0)
+                    end 
+                    @constraint(model, x[w,t,s] >= 0)
+                    @constraint(model, z[w,t,s] >= 0)
+                    @constraint(model, m[w,t,s] >= 0)
+            end
         end 
     end 
 
-    #7. What has been sent is equal to what has been received throughout the all networks
-
-    for t in sim_T
-        for w in W
-            @constraint(model, sum(y_rec[w,q,t] for q in W if q != w) == sum(y_send[w,q,t] for q in W if q != w))
-        end
-    end 
+    
 
     # Solve 
     optimize!(model)
@@ -159,8 +183,8 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
         for (i, variable) in enumerate(all_variables(model))
             println("$(variable) = $(values[i])")
         end
-        for w in W, t in sim_T
-            println("x[$w, $t] = ", value(x[w, t]), ", m[$w, $t] = ", value(m[w, t]), ", z[$w, $t] = ", value(z[w, t]))
+        for w in W, t in sim_T, s in 1: N_representative_scenarios
+            println("x[$w, $t] = ", value(x[w, t, s]), ", m[$w, $t] = ", value(m[w, t, s]), ", z[$w, $t] = ", value(z[w, t, s]))
         end
         # Save results to dataframe, if necessary 
         # result_df = DataFrame(Variable = string.(names(model)), Value = values)
@@ -174,4 +198,4 @@ inintal_price1 = 2
 inintal_price2 = 5
 inintal_price3 = 10
 initial_prices = [inintal_price1, inintal_price2, inintal_price3]
-here_and_now_dec = Make_Stochastic_here_and_now_decision(initial_prices, 50)
+here_and_now_dec = Make_Stochastic_here_and_now_decision(initial_prices, 10)
