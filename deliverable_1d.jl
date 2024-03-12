@@ -23,9 +23,10 @@ using Distributions  # Adding Distributions package
 Pkg.add("Distributions")
 
 # import data from 
-include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_02435_two_stage_problem_data.jl")
-include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_price_process.jl")
-
+# include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_02435_two_stage_problem_data.jl")
+# include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_price_process.jl")
+include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/V2_02435_two_stage_problem_data.jl")
+include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/V2_price_process.jl")
 
 function Make_Stochastic_here_and_now_decision(prices_day_one, N)
     global sim_T  # Added to access sim_T globally
@@ -190,7 +191,7 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
         # result_df = DataFrame(Variable = string.(names(model)), Value = values)
         # CSV.write("Result_assignemnt1b.csv", result_df)
     end
-    return [values], expected_price 
+    return [values], obj_val, expected_price 
 end
 
 # Set initial prices 
