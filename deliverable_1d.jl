@@ -1,5 +1,3 @@
-
-#  make_schocastic_here_and_now_decision = 
 #  Function: makes a stochastic here-and-now decision by using a specified number 
 #  of scenarios N for the second-stage prices.
 
