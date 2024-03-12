@@ -16,8 +16,10 @@ Pkg.add("Distributions")
 # include("/Users/marloanzarut/Downloads/decisionmaking_under_uncertainty/V2_price_process.jl")
 
 # Elinoprs files 
-include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_02435_two_stage_problem_data.jl")
-include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_price_process.jl")
+include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/V2_02435_two_stage_problem_data.jl")
+include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/V2_price_process.jl")
+# include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_02435_two_stage_problem_data.jl")
+# include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_price_process.jl")
 
 
 # The Expected-Value benchmark 
@@ -97,17 +99,8 @@ function Make_EV_here_and_now(prices_day_one)
         end
     end 
 
-    #6. What has been sent is equal to what has been received throughout the all networks
-
-    for t in sim_T
-        for w in W
-            @constraint(model, sum(y_rec[w,q,t] for q in W if q != w) == sum(y_send[w,q,t] for q in W if q != w))
-        end
-    end 
-
-
-    # 7. All variables greater or equal to zero 
-    for t in sim_T
+    # 6. All variables greater or equal to zero 
+    for t in sim_T 
         for w in W 
             for q in W 
                 @constraint(model, y_send[w,q,t] >= 0)
@@ -135,17 +128,19 @@ function Make_EV_here_and_now(prices_day_one)
         obj_val = objective_value(model)
         values = [value(variable) for variable in all_variables(model)]
 
-        for (i, variable) in enumerate(all_variables(model))
-            println("$(variable) = $(values[i])")
-        end
-        for w in W, t in sim_T
-            println("x[$w, $t] = ", value(x[w, t]), ", m[$w, $t] = ", value(m[w, t]), ", z[$w, $t] = ", value(z[w, t]))
-        end
+        # for (i, variable) in enumerate(all_variables(model))
+        #     #println("$(variable) = $(values[i])")
+        #     pass
+        # end
+        # for w in W, t in sim_T
+        #     #println("x[$w, $t] = ", value(x[w, t]), ", m[$w, $t] = ", value(m[w, t]), ", z[$w, $t] = ", value(z[w, t]))
+        #     pass 
+        # end
         # Save results to dataframe, if necessary 
         # result_df = DataFrame(Variable = string.(names(model)), Value = values)
         # CSV.write("Result_assignemnt1b.csv", result_df)
     end
-    return [values], expected_price 
+    return [values], obj_val, expected_price 
 end
 
 # Set initial prices 
@@ -154,3 +149,4 @@ inital_price2 = 5
 inital_price3 = 10
 initial_prices = [inital_price1, inital_price2, inital_price3]
 here_and_now_dec = Make_EV_here_and_now(initial_prices)
+

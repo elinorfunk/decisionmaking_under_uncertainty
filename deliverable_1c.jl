@@ -14,7 +14,7 @@ using XLSX
 include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/deliverable_1b.jl")
 
 
-function optimization(prices)
+function optimal_in_hindsight(prices)
 
     # Read the data and constants from other file 
     number_of_warehouses, W, cost_miss_b, cost_tr_e, warehouse_capacities, transport_capacities, initial_stock_z, number_of_simulation_periods, sim_T, demand_trajectory = load_the_data()
@@ -104,7 +104,6 @@ function optimization(prices)
         end 
     end 
 
-
     # Solve 
     optimize!(model)
 
@@ -113,12 +112,12 @@ function optimization(prices)
         obj_val = objective_value(model)
         values = [value(variable) for variable in all_variables(model)]
 
-        for (i, variable) in enumerate(all_variables(model))
-            println("$(variable) = $(values[i])")
-        end
-        for w in W, t in sim_T
-            println("x[$w, $t] = ", value(x[w, t]), ", m[$w, $t] = ", value(m[w, t]), ", z[$w, $t] = ", value(z[w, t]))
-        end
+        # for (i, variable) in enumerate(all_variables(model))
+        #     println("$(variable) = $(values[i])")
+        # end
+        # for w in W, t in sim_T
+        #     println("x[$w, $t] = ", value(x[w, t]), ", m[$w, $t] = ", value(m[w, t]), ", z[$w, $t] = ", value(z[w, t]))
+        # end
         # Save results to dataframe, if necessary 
         # XLSX.writexlsx("results_assignment1c.xlsx", 
         # DataFrame = DataFrame(variable = values, value = obj_val))
@@ -130,9 +129,10 @@ end
 
 function Calculate_OiH_solution(prices1, prices2)
 
-    stage_one_decision = optimization(prices1)
-    stage_two_decision = optimization(prices2) 
-    
+    stage_one_decision, cost1 = optimal_in_hindsight(prices1)
+    stage_two_decision, cost2 = optimal_in_hindsight(prices2) 
+    cost = cost1+cost2
+
     return [stage_one_decision, stage_two_decision], cost 
 end 
 
@@ -141,7 +141,8 @@ inintal_price1 = 10
 inintal_price2 = 10
 inintal_price3 = 10
 initial_prices = [inintal_price1, inintal_price2, inintal_price3]
-data, prices_day_two = Make_EV_here_and_now(initial_prices)
+prices_day_two = [sample_next(inintal_price1), sample_next(inintal_price2), sample_next(inintal_price1)]
+here_and_now_dec = Make_EV_here_and_now(initial_prices)
 
 # Run the function to get the data 
-decisions, cost = Calculate_OiH_solution(initial_prices, prices_day_two)
+decisions, costs = Calculate_OiH_solution(initial_prices, prices_day_two)
