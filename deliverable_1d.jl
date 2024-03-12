@@ -181,12 +181,12 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
         obj_val = objective_value(model)
         values = [value(variable) for variable in all_variables(model)]
 
-        for (i, variable) in enumerate(all_variables(model))
-            println("$(variable) = $(values[i])")
-        end
-        for w in W, t in sim_T, s in 1: N_representative_scenarios
-            println("x[$w, $t] = ", value(x[w, t, s]), ", m[$w, $t] = ", value(m[w, t, s]), ", z[$w, $t] = ", value(z[w, t, s]))
-        end
+        # for (i, variable) in enumerate(all_variables(model))
+        #     println("$(variable) = $(values[i])")
+        # end
+        # for w in W, t in sim_T, s in 1: N_representative_scenarios
+        #     println("x[$w, $t] = ", value(x[w, t, s]), ", m[$w, $t] = ", value(m[w, t, s]), ", z[$w, $t] = ", value(z[w, t, s]))
+        # end
         # Save results to dataframe, if necessary 
         # result_df = DataFrame(Variable = string.(names(model)), Value = values)
         # CSV.write("Result_assignemnt1b.csv", result_df)
