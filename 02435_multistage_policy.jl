@@ -6,6 +6,7 @@ using DataFrames
 using CSV
 using Distributions  # Adding Distributions package
 using XLSX
+using Random
 
 Pkg.add("Distributions")
 
@@ -27,20 +28,27 @@ function make_multistage_here_and_now_decision(num_sim_periods, tau, current_sto
     lookahead_days = tau
     initial_scenarios = 1000  #Adjust number if necessary
 
+    # Make emmpty 3D array
     scenarios = zeros(num_sim_periods, length(current_prices), initial_scenarios)
 
     # Stage 1: prices are set to current_prices
     scenarios[1, :, :] .= reshape(current_prices, 1, length(current_prices))
 
-    # For stage 2 until num_sim_periods, use sample_next
-    for t in 2:number_of_sim_periods
+    # Stage 2 until num_sim_periods
+    for t in 2:num_sim_periods
         for s in 1:initial_scenarios
             # sample next prices
             price_samples = [[sample_next(prices_day_one[1]), sample_next(prices_day_one[1]), sample_next(prices_day_one[2])] for _ in num_sim_periods]
+            
+            #Assume a random variation of scenarios?? Im not sure about this
             scenarios[t, :, s] .= scenarios[t - 1, :, s] .* rand(0.8:0.01:1.2, length(current_prices))
 
         end
     end
+    
+    #Discretize scenarios
+    discrete_scenarios = round.(scenarios, digits=2)
+
 
     # Create and populate non-anticipativty Make_Stochastic_here_and_now_decision
 
