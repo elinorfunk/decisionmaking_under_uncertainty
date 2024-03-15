@@ -144,9 +144,9 @@ function Make_EV_here_and_now(prices_day_one)
 end
 
 # Set initial prices 
-inintal_price1 = 2
-inintal_price2 = 5
-inintal_price3 = 10
-initial_prices = [inintal_price1, inintal_price2, inintal_price3]
+inital_price1 = 2
+inital_price2 = 5
+inital_price3 = 10
+initial_prices = [inital_price1, inital_price2, inital_price3]
 here_and_now_dec = Make_EV_here_and_now(initial_prices)
 
