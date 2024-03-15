@@ -6,10 +6,9 @@ using Printf
 using Pkg
 using DataFrames
 using CSV
-using Distributions  # Adding Distributions package
+using Distributions
 using XLSX
 
-Pkg.add("Distributions")
 
 # import data from 
 # include("/Users/marloanzarut/Downloads/decisionmaking_under_uncertainty/V2_02435_two_stage_problem_data.jl")

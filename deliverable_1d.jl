@@ -16,9 +16,7 @@ using Printf
 using Pkg
 using DataFrames
 using CSV
-using Distributions  # Adding Distributions package
-
-Pkg.add("Distributions")
+using Distributions 
 
 # import data from 
 # include("C://Users//helle//Desktop//02435Decision making under uncertainty//Julia codes//decision_making//Assignment_A//decisionmaking_under_uncertainty//V2_02435_two_stage_problem_data.jl")
@@ -197,4 +195,4 @@ inintal_price1 = 2
 inintal_price2 = 5
 inintal_price3 = 10
 initial_prices = [inintal_price1, inintal_price2, inintal_price3]
-here_and_now_dec = Make_Stochastic_here_and_now_decision(initial_prices, 10)
+here_and_now_dec = Make_Stochastic_here_and_now_decision(initial_prices, 2)

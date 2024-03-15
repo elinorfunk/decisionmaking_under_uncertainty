@@ -58,13 +58,79 @@ for price in inital_prices
     push!(costs_EV, cost_EV_1 + cost_EV_2)
     push!(costs_stochN1, cost_stoch1_1 + cost_stoch2_1)
     push!(costs_stochN2, cost_stoch1_2 + cost_stoch2_2)
-    push!(costs_stochN2, cost_stoch1_3 + cost_stoch2_3)
+    push!(costs_stochN3, cost_stoch1_3 + cost_stoch2_3)
     push!(costs_OiH, costOiH1 + costOiH2)
     
 end
 
-println(f"EV: {costs_EV}")
-println(f"{costs_stochN1}")
-println(f"{costs_stochN2}")
-println(f"{costs_stochN3}")
-println(f"{costs_OiH}")
+# println("EV: $costs_EV")
+# println("Stoch $N1 $costs_stochN1")
+# println("Stoch $N2 $costs_stochN2")
+# println("Stoch $N3 $costs_stochN3")
+# println("OiH $costs_OiH")
+
+
+using CSV
+using Statistics
+using Plots
+
+# Save data in Excel sheet 
+results_df = DataFrame(
+    "Expected Value" => costs_EV,
+    "Stochastic $N1 scenarios" => costs_stochN1,
+    "Stochastic $N2 scenarios" => costs_stochN2,
+    "Stochastic $N3 scenarios" => costs_stochN3,
+    "OiH" => costs_OiH)
+
+CSV.write("deliverable1e_results.csv", results_df)
+
+
+# Calculate mean, min, and max values, and plot 
+mean_EV = mean(costs_EV)
+min_EV = minimum(costs_EV)
+max_EV = maximum(costs_EV)
+
+mean_stochN1 = mean(costs_stochN1)
+min_stochN1 = minimum(costs_stochN1)
+max_stochN1 = maximum(costs_stochN1)
+
+mean_stochN2 = mean(costs_stochN2)
+min_stochN2 = minimum(costs_stochN2)
+max_stochN2 = maximum(costs_stochN2)
+
+mean_stochN3 = mean(costs_stochN3)
+min_stochN3 = minimum(costs_stochN3)
+max_stochN3 = maximum(costs_stochN3)
+
+mean_OiH = mean(costs_OiH)
+min_OiH = minimum(costs_OiH)
+max_OiH = maximum(costs_OiH)
+
+println("Mean, Min, and Max values for Expected Value:")
+println("Mean: $mean_EV, Min: $min_EV, Max: $max_EV")
+
+println("Mean, Min, and Max values for Stochstic optimization $N1:")
+println("Mean: $mean_stochN1, Min: $min_stochN1, Max: $max_stochN1")
+
+println("Mean, Min, and Max values for Stochstic optimization $N2:")
+println("Mean: $mean_stochN2, Min: $min_stochN2, Max: $max_stochN2")
+
+println("Mean, Min, and Max values for Stochstic optimization $N3:")
+println("Mean: $mean_stochN3, Min: $min_stochN3, Max: $max_stochN3")
+
+println("Mean, Min, and Max values for Optimal in Hindsight optimization:")
+println("Mean: $mean_OiH, Min: $min_OiH, Max: $max_OiH")
+
+results_plot = plot([costs_EV, costs_stochN1, costs_stochN2, costs_stochN3, costs_OiH],
+     label=["Expected Value" "Stochastic Program, $N1 sc." "Stochastic Program, $N2 sc." "Stochastic Program, $N3 sc." "OiH solution"],
+     xlabel="Index", ylabel="Value", title="Costs for the different Programs/Solutions",
+     marker=:circle)
+hline!([mean_EV], label="Mean Expected Value", color=:blue)
+hline!([mean_stochN1], label="Mean Stochastic Program, $N1 sc", color=:green)
+hline!([mean_stochN2], label="Mean Stochastic Program, $N2 sc", color=:red)
+hline!([mean_stochN3], label="Mean Stochastic Program, $N3 sc", color=:purple)
+hline!([mean_OiH], label="Mean OiH", color=:orange)
+legendfont=font(3)
+
+display(results_plot)
+savefig("results_1e.png")
