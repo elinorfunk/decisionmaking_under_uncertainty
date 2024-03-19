@@ -34,7 +34,7 @@ function optimal_in_hindsight(prices)
     @objective(model, Min, OB)
 
     # Define our constraints 
-    # 1. Constraints for storage limits
+    # 1. Constraint for storage limits
     for t in sim_T 
         for w in W
             @constraint(model, z[w, t] <= warehouse_capacities[w])
@@ -60,14 +60,14 @@ function optimal_in_hindsight(prices)
     end
     
 
-    # 4. Ensure that the coffee demand is always met 
+    # 4. Constraint to ensure that the coffee demand is always met 
     for t in sim_T
         for w in W
             @constraint(model, z[w,t] + sum(y_rec[w,q,t] for q in W if q != w) >= demand_trajectory[w,t])
         end 
     end 
 
-    # 5. Balance constraint
+    # 5. Constraint to balance everything in the warehouse network
     for t in sim_T 
         for w in W
             if t == 1
@@ -84,14 +84,14 @@ function optimal_in_hindsight(prices)
         end
     end 
 
-    #6. What has been sent is equal to what has been received throughout the all networks
+    #6. Constraint what has been sent is equal to what has been received throughout the all networks
     for t in sim_T
         for w in W
             @constraint(model, sum(y_rec[w,q,t] for q in W if q != w) == sum(y_send[w,q,t] for q in W if q != w))
         end
     end 
 
-    #7. All variables greater or equal to zero 
+    #7. Constraint  All variables greater or equal to zero 
     for t in sim_T 
         for w in W 
             for q in W 

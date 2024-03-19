@@ -25,16 +25,17 @@ include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking
 include("/Users/elino/Documents/Decision Making under Uncertainty/decisionmaking_under_uncertainty/V2_price_process.jl")
 
 function Make_Stochastic_here_and_now_decision(prices_day_one, N)
-    global sim_T  # Added to access sim_T globally
+    # Added to access sim_T globally
+    global sim_T  
 
     # Read the data and constants from other file 
     number_of_warehouses, W, cost_miss_b, cost_tr_e, warehouse_capacities, transport_capacities, initial_stock_z, number_of_simulation_periods, sim_T, demand_trajectory = load_the_data()
 
     # generate 1000 equally probable scenarios using sample next (given the initial prices)
-    scenarios = [[sample_next(prices_day_one[1]), sample_next(prices_day_one[1]), sample_next(prices_day_one[2])] for _ in 1:1000] ### 1000 SIMULATION PERIODS?
+    scenarios = [[sample_next(prices_day_one[1]), sample_next(prices_day_one[1]), sample_next(prices_day_one[2])] for _ in 1:1000]
     
-    #reduce them to N representative ones with appropriate probabilities
-    ## N representative
+
+    # Reducing scenarios to N representative
 
     N_representative_scenarios_indices = randperm(length(scenarios))[1:N]
 
@@ -42,14 +43,13 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
 
     S = 1: N_representative_scenarios
 
-    ## Probabilities
-    #probabilities = fill(1/N, N) ### WORK IT OUT
+    # Appropriate probabilities
     probabilities = fill(1/length(N_representative_scenarios_indices), N) 
 
 
     expected_price = mean(scenarios)
 
-    # # Make model with Gurobi
+    # Make model with Gurobi
     model = Model(Gurobi.Optimizer)
 
     # Define our variables, all positive
@@ -66,12 +66,11 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
         + sum((cost_tr_e[w, t] * y_rec[w, q, t, s]) + (cost_miss_b[w] * m[w, t, s]) for w in W, q in W, t in sim_T)
     ) for s in S)
 
-    ### EXPECTED PRICE?
     @objective(model, Min, OB)
 
-    # # Define our constraints 
+    # Define our constraints 
 
-    # # 1. Constraints for storage limits
+    # 1. Constraint for storage limits
     for t in sim_T 
         for w in W
             for s in S
@@ -103,7 +102,7 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
     end
     
 
-    # 4. Ensure that the coffee demand is always met 
+    # 4. Constraint to ensure that the coffee demand is always met 
     for t in sim_T
         for w in W
             for s in S
@@ -112,7 +111,7 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
         end 
     end 
 
-    # 5. Balance constraint
+    # 5. Constraint to balance everything in the warehouse network
     for t in sim_T 
         for w in W
             for s in S
@@ -132,7 +131,7 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
         end
     end 
 
-    #6. What has been sent is equal to what has been received throughout the all networks
+    #6. Constraint what has been sent is equal to what has been received throughout the all networks
 
     for t in sim_T
         for w in W
@@ -142,17 +141,8 @@ function Make_Stochastic_here_and_now_decision(prices_day_one, N)
         end
 
     end 
-    #7. What has been sent is equal to what has been received throughout the all networks
-
-        for t in sim_T
-            for w in W
-                for s in S
-                    @constraint(model, sum(y_rec[w,q,t,s] for q in W if q != w) == sum(y_send[w,q,t,s] for q in W if q != w))
-                end
-            end
-        end 
-
-    # 8. All variables greater or equal to zero 
+  
+    # 7. Constraint all variables greater or equal to zero 
     for t in sim_T
         for w in W 
             for s in S
