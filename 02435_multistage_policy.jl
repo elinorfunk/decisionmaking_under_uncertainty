@@ -24,10 +24,13 @@ end
 
 # Reduce scenarios
 function reduce_scenarios(scenarios, max_scenarios)
-    num_scenarios = size(scenarios, 3)
-    if num_scenarios > max_scenarios
-        indices = randperm(num_scenarios)[1:max_scenarios]
-        return scenarios[:, :, indices]
+    num_scenarios = length(scenarios)
+    if num_scenarios < max_scenarios
+        while length(scenarios) < max_scenarios
+            scenario = rand(scenarios)
+            push!(scenarios, scenario)
+        end
+        return scenarios
     else
         return scenarios
     end
@@ -38,134 +41,130 @@ function reassign_probabilites(scenarios)
     return probabilities
 end
 
-### !!! DO something here 
-# Create & populate non-anticipativity sets
+# Create non-anticipativity sets
 function create_non_anticipativity_sets(scenarios)
-    return nothing
+    return scenarios
 end
 
 function make_multistage_here_and_now_decision(number_of_sim_periods, tau, current_stock, current_prices)
     # Get data from multi-stage file 
     number_of_warehouses, W, cost_miss_b, cost_tr_e, warehouse_capacities, transport_capacities, initial_stock, number_of_simulation_periods, sim_T, demand_trajectory = load_the_data()
+    max_scenarios = 10 
 
     # At each time step create scenarios 
     scenarios = generate_scenarios(initial_prices,initial_scenarios)
     discrete_scen = discretize_scenarios(scenarios)
-    scenarios_reduced = reduce_scenarios(discrete_scen, max_scenarios)
+    scenarios_reduced = reduce_scenarios(discrete_scen, 10)
 
     probabilities = reassign_probabilites(scenarios_reduced)
-    S = collect(1:length(scenarios_reduced))
-
     expected_price = sum(scenarios_reduced .* probabilities)
 
-    # # Make model with Gurobi
-    model_multistage = Model(Gurobi.Optimizer)
+    x_results = []
+    send_results = []
+    rec_results = []
+    z_results = []
+    m_results = []
+    cost_results = []
 
-    # Define our variables, all positive
-    @variable(model_multistage, x[w = W] >= 0) 
-    @variable(model_multistage, z[w = W] >= 0)  
-    @variable(model_multistage, y_send[w = W, q = W] >= 0) 
-    @variable(model_multistage, y_rec[w = W, q = W] >= 0) 
-    @variable(model_multistage, m[w = W] >= 0) 
+    println("scenarios_red", length(scenarios_reduced))
+    # for s in 1:length(scenarios_reduced)
 
-    # Define our objective function 
-    OB = sum(probabilities[s] * (sum(expected_price[w] * x[w] for w in W)
-    + sum((cost_tr_e[w] * y_rec[w, q]) + (cost_miss_b[w] * m[w]) for w in W, q in W)) for s in 1:length(scenarios))
+    #     ## Make model with Gurobi
+    #     model_multistage = Model(Gurobi.Optimizer)
 
-    @objective(model_multistage, Min, OB)
+    #     # Define our variables, all positive
+    #     @variable(model_multistage, x[w = W] >= 0) 
+    #     @variable(model_multistage, z[w = W] >= 0)  
+    #     @variable(model_multistage, y_send[w = W, q = W] >= 0) 
+    #     @variable(model_multistage, y_rec[w = W, q = W] >= 0) 
+    #     @variable(model_multistage, m[w = W] >= 0) 
 
-    # Define our constraints 
-    # # 1. Constraints for storage limits
-    for w in W
-        @constraint(model_multistage, z[w] <= warehouse_capacities[w])
-    end
-         
+    #     # Define our objective function 
+    #     OB = sum(probabilities[s] * (
+    #             sum(expected_price[w] * x[w] for w in W) +
+    #             sum((cost_tr_e[w] * y_rec[w, q]) + (cost_miss_b[w] * m[w]) for w in W, q in W)))
 
-    # 2. Constraint for transportation limits 
-    for w in W
-        @constraint(model_multistage, sum(y_send[w, q] for q in W if q != w) <= sum(transport_capacities[w, q] for q in W if q != w)) 
-    end
-   
-    # 3. Constraint for initial storage
-    for w in W
-        @constraint(model_multistage, sum(y_send[w, q] for q in W if q != w) <= z[w]) 
-    end
-        
-    # 4. Ensure that the coffee demand is always met 
-    for w in W
-        @constraint(model_multistage, z[w] + sum(y_rec[w,q] for q in W if q != w) >= demand_trajectory[w])
-    end
-         
+    #     @objective(model_multistage, Min, OB)
 
-    # 5. Balance constraint
-    for w in W
-        @constraint(model_multistage, (x[w] + m[w] + z[w]
-        + sum(y_rec[w,q] for q in W if q != w) 
-        - sum(y_send[w,q] for q in W if q != w) 
-        - demand_trajectory[w]) == z[w])
-    end 
-  
+    #     # Define our constraints 
+    #     # 1. Constraints for storage limits
+    #     for w in W
+    #         @constraint(model_multistage, z[w] <= warehouse_capacities[w])
+    #     end
 
-    #6. What has been sent is equal to what has been received throughout the all networks
-    for w in W
-        @constraint(model_multistage, sum(y_rec[w,q] for q in W if q != w) == sum(y_send[w,q] for q in W if q != w))
-    end
+    #     # 2. Constraint for transportation limits 
+    #     for w in W
+    #         @constraint(model_multistage, sum(y_send[w, q] for q in W if q != w) <= sum(transport_capacities[w, q] for q in W if q != w)) 
+    #     end
 
-    #7. What has been sent is equal to what has been received throughout the all networks
-    for w in W 
-        @constraint(model_multistage, sum(y_rec[w,q] for q in W if q != w) == sum(y_send[w,q] for q in W if q != w))
-    end
-            
-    # 8. All variables greater or equal to zero 
-    
-    for w in W 
-        for q in W 
-            @constraint(model_multistage, y_send[w,q] >= 0)
-            @constraint(model_multistage, y_rec[w,q] >= 0)
-            end 
-        @constraint(model_multistage, x[w] >= 0)
-        @constraint(model_multistage, z[w] >= 0)
-        @constraint(model_multistage, m[w] >= 0)
-    end
-    
-    # Get list with non-anticipativity constraints
-    non_anti_constraints = create_non_anticipativity_sets(W)
+    #     # 3. Constraint for initial storage
+    #     for w in W
+    #         @constraint(model_multistage, sum(y_send[w, q] for q in W if q != w) <= z[w]) 
+    #     end
 
-    # # 9. Constraint for non-anticipativity
-    for constr in non_anti_constraints
-        for t in 2:number_of_simulation_periods
-            for v in constr
-                @constraint(model_multistage, v[t] == v[1]) 
-            end
-        end
-    end
+    #     # 4. Ensure that the coffee demand is always met 
+    #     for w in W
+    #         @constraint(model_multistage, z[w] + sum(y_rec[w, q] for q in W if q != w) >= demand_trajectory[w])
+    #     end
 
-    # Solve 
-    optimize!(model_multistage)
+    #     # 5. Balance constraint
+    #     for w in W
+    #         @constraint(model_multistage, (x[w] + m[w] + z[w]
+    #             + sum(y_rec[w, q] for q in W if q != w) 
+    #             - sum(y_send[w, q] for q in W if q != w) 
+    #             - demand_trajectory[w]) == z[w])
+    #     end
 
-    if termination_status(model_multistage) == MOI.OPTIMAL
-        println("Optimization succeeded")
-        x = [value(var) for var in all_variables(model_multistage) if startswith(string(var), "x")]
-        z = [value(var) for var in all_variables(model_multistage) if startswith(string(var), "z")]
-        m = [value(var) for var in all_variables(model_multistage) if startswith(string(var), "m")]
+    #     # 6. What has been sent is equal to what has been received throughout the entire network
+    #     for w in W
+    #         @constraint(model_multistage, sum(y_rec[w, q] for q in W if q != w) == sum(y_send[w, q] for q in W if q != w))
+    #     end
 
-        y_send = zeros(number_of_warehouses, number_of_warehouses)
-        y_rec = zeros(number_of_warehouses, number_of_warehouses)
-        ind = [(i, j) for i in 1:number_of_warehouses, j in 1:number_of_warehouses]
-        for (i, j) in ind
-            if startswith(string(i), "y_send")
-                y_send[i, j] = value(model_multistage[:y_send, i, j])
-            end
-            if startswith(string(i), "y_rec")
-                y_rec[i, j] = value(model_multistage[:y_rec, i, j])
-            end
-        end
-        return x, y_send, y_rec, z, m
-    else
-        return 0
-     
-    
-    end
+    #     # 7. All variables greater or equal to zero 
+    #     for w in W 
+    #         for q in W 
+    #             @constraint(model_multistage, y_send[w, q] >= 0)
+    #             @constraint(model_multistage, y_rec[w, q] >= 0)
+    #         end 
+    #         @constraint(model_multistage, x[w] >= 0)
+    #         @constraint(model_multistage, z[w] >= 0)
+    #         @constraint(model_multistage, m[w] >= 0)
+    #     end
+
+    #     # 8. Constraint for non-anticipativity
+    #     if s != 1
+    #         for w in W
+    #             @constraint(model_multistage, x[w] == x_results[s-1][w])
+    #             @constraint(model_multistage, z[w] == z_results[s-1][w])
+    #             @constraint(model_multistage, m[w] == m_results[s-1][w])
+    #             for q in W
+    #                 @constraint(model_multistage, y_send[w, q] == send_results[s-1][w, q])
+    #                 @constraint(model_multistage, y_rec[w, q] == rec_results[s-1][w, q])
+    #             end
+    #         end
+    #     end
+
+    #     # Solve 
+    #     optimize!(model_multistage)
+
+    #     if termination_status(model_multistage) == MOI.OPTIMAL
+    #         println("Optimization succeeded for scenario $s")
+    #         push!(x_results, value.(x))
+    #         push!(send_results, value.(y_send))
+    #         push!(rec_results, value.(y_rec))
+    #         push!(z_results, value.(z))
+    #         push!(m_results, value.(m))
+
+    #         push!(cost_results, objective_value(model_multistage))
+    #     else
+    #         println("Optimization failed for scenario $s")
+    #     end 
+
+    # end 
+
+    # min_cost_index = argmin(cost_results) 
+    # return x_results[min_cost_index], send_results[min_cost_index], rec_results[min_cost_index], z_results[min_cost_index], m_results[min_cost_index]
+
 end
 
 # Define parameters 
