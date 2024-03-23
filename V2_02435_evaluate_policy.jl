@@ -4,7 +4,6 @@
 
 # You should not change anything in this file (except for the file and function names in lines 9 and 48, if you want to evaluate different policies).
 
-
 # Including your policy and the dummy policy
 include("02435_multistage_policy.jl")
 include("V2_dummy_policy.jl")
@@ -45,11 +44,10 @@ for e in Expers
 
         # Call policy to make a decision for here and now
         x[(e,tau)], send[(e,tau)], receive[(e,tau)], z[(e,tau)], m[(e,tau)] = make_multistage_here_and_now_decision(number_of_sim_periods, tau, current_stock, current_prices)
-        
-        
+
         #Check whether the policy's here and now decisions are feasible/meaningful
         successful = check_feasibility(x[(e,tau)], send[(e,tau)], receive[(e,tau)], z[(e,tau)], m[(e,tau)], current_stock, current_demands,  warehouse_capacities, transport_capacities)
-        # If not, then the policy's decisions are discarded for this timeslot, and the dummy policy is used instead
+        # If not, then the policy's deciserrions are discarded for this timeslot, and the dummy policy is used instead
         if successful == 0
             println("DECISION DOES NOT MEET THE CONSTRAINTS FOR THIS TIMESLOT. THE DUMMY POLICY WILL BE USED INSTEAD")
             println(e, number_of_sim_periods, tau, current_stock, current_demands, x[(e,tau)], send[(e,tau)], receive[(e,tau)], z[(e,tau)], m[(e,tau)])
@@ -62,7 +60,7 @@ for e in Expers
             global rp = receive[(e,tau)] 
             global zp = z[(e,tau)]
             global mp = m[(e,tau)]
-            x[(e,tau)], send[(e,tau)], receive[(e,tau)], z[(e,tau)], m[(e,tau)] = make_dummy_decision(number_of_sim_periods, tau, current_stock, current_demands, current_prices)
+            x[(e,tau)], send[(e,tau)], receive[(e,tau)], z[(e,tau)], m[(e,tau)] = make_dummy_decision(number_of_sim_periods, tau, current_stock, current_prices)
         end
 
         policy_cost[e,tau] = sum(current_prices[w]*x[(e,tau)][w] + cost_miss[w]*m[(e,tau)][w] + sum(cost_tr[w,q]*receive[(e,tau)][w,q] for q in W) for w in W)  

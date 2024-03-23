@@ -1,6 +1,5 @@
 function check_feasibility(x, send, receive, z, m, current_stock, current_demands, warehouse_capacities, transport_capacities)
     
-
     function any_negative_element(matrices...)
         for matrix in matrices
             if any(matrix .< 0 - 0.01)
@@ -35,7 +34,6 @@ function check_feasibility(x, send, receive, z, m, current_stock, current_demand
         for q in W
             transport_residual[w,q] = transport_capacities[w,q] - send[w,q]
             consistency_residual[w,q] = send[w,q] - receive[q,w]
-            
         end    
     end
 

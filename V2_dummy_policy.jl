@@ -7,6 +7,7 @@ function make_dummy_decision(number_of_sim_periods, tau, current_stock, current_
 
     include("V2_02435_multistage_problem_data.jl")
     number_of_warehouses, W, c_miss, cost_tr, warehouse_capacities, transport_capacities, initial_stock, number_of_simulation_periods, sim_T, demand_trajectory = load_the_data()
+    println(demand_trajectory)
 
     current_demands = demand_trajectory[:,tau]
 
@@ -18,3 +19,7 @@ function make_dummy_decision(number_of_sim_periods, tau, current_stock, current_
 
     return x, send, receive, z, m
 end
+
+x, send, receive, z, m = make_dummy_decision(2, 2, [2,2,2], [2,2,2])
+
+println(size(x), size(send), size(receive), size(z), size(m))

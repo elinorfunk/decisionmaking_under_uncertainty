@@ -39,10 +39,12 @@ function check_feasibility(x, send, receive, z, m, current_stock, current_demand
         end    
     end
 
+    #print("EPSILON MATRIX:", any_element_outside_epsilon(balance_residual, consistency_residual))
     if any_negative_element(stock_positivity, delay_residual, transport_residual, capacity_residual) || any_element_outside_epsilon(balance_residual, consistency_residual)
         println("THE DECISIONS DO NOT RESPECT THE CONSTRAINTS. CHECK THAT THE CONSTRAINTS FOR THE CURRENT TIMESLOT ARE CORRECTLY IMPLEMENTED")
         success = 0
     else
+        println(" !!!! THE CONSTRAINTS ARE CORRECT !????!!!!")
         success = 1
     end
 
