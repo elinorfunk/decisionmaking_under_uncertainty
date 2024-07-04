@@ -42,14 +42,13 @@ function reassign_probabilites(scenarios)
 end
 
 
-function make_multistage_here_and_now_decision(number_of_sim_periods, tau, current_stock, current_prices)
+function make_multistage_here_and_now_decision(number_of_sim_periods, tau, current_stock, current_prices, max_scenarios)
     
     # Get data from multi-stage file 
     number_of_warehouses, W, cost_miss_b, cost_tr_e, warehouse_capacities, transport_capacities, initial_stock, number_of_simulation_periods, sim_T, demand_trajectory = load_the_data()
     
     # Define parameters
     initial_scenarios = 50
-    max_scenarios = 10
     initial_prices = [2,2,2]
     
     # Create and discretize scenarios

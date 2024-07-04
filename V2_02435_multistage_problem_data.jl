@@ -40,4 +40,3 @@ function load_the_data()
     return number_of_warehouses, W, cost_miss, cost_tr, warehouse_capacities, transport_capacities, initial_stock, number_of_simulation_periods, sim_T, demand_trajectory
 end
 
-#end  # End of module
