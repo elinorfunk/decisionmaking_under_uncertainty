@@ -10,3 +10,4 @@ The code is in Julia.
 - Deliverable 1b is Expected Value benchmark.
 - Deliverable 1c is Optimal-in-Hindsight benchmark.
 - Deliverable 1d is Two-Stage Stochastic Programming. 
+- Deliverable 1e is for evaluation and comparison of the programs. 
