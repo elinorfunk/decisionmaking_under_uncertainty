@@ -5,7 +5,7 @@ The objective of the course is to acquire the skills necessary for addressing de
 The code is in Julia. 
 
 
-# Assignment 1 consists of a Two-Stage Problem. 
+### Assignment 1 consists of a Two-Stage Problem. 
 - Deliverable 1a is modelling and deteministic optimization.
 - Deliverable 1b is Expected Value benchmark.
 - Deliverable 1c is Optimal-in-Hindsight benchmark.
